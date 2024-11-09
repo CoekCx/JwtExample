@@ -5,25 +5,37 @@ namespace JwtExamples.ControllerApi.Extensions;
 
 public static class ResultExtensions
 {
-    public static IActionResult ToActionResult<T>(this Result<T> result, ControllerBase controller) =>
-        result.Match<IActionResult>(
-            success => controller.Ok(success),
-            errors => errors.First().Metadata.GetValueOrDefault("ErrorType") switch
-            {
-                "NotFound" => controller.NotFound(errors),
-                "Validation" => controller.BadRequest(errors),
-                "Authentication" => controller.Unauthorized(),
-                _ => controller.StatusCode(500)
-            });
+    public static IActionResult ToActionResult<T>(this Result<T> result, ControllerBase controller)
+    {
+        if (result.IsSuccess)
+        {
+            return controller.Ok(result.Value);
+        }
 
-    public static IActionResult ToActionResult(this Result result, ControllerBase controller) =>
-        result.Match<IActionResult>(
-            () => controller.NoContent(),
-            errors => errors.First().Metadata.GetValueOrDefault("ErrorType") switch
-            {
-                "NotFound" => controller.NotFound(errors),
-                "Validation" => controller.BadRequest(errors),
-                "Authentication" => controller.Unauthorized(),
-                _ => controller.StatusCode(500)
-            });
+        var error = result.Errors.First();
+        return error.Metadata.GetValueOrDefault("ErrorType") switch
+        {
+            "NotFound" => controller.NotFound(error.Message),
+            "Validation" => controller.BadRequest(error.Message),
+            "Authentication" => controller.Unauthorized(),
+            _ => controller.StatusCode(500)
+        };
+    }
+
+    public static IActionResult ToActionResult(this Result result, ControllerBase controller)
+    {
+        if (result.IsSuccess)
+        {
+            return controller.NoContent();
+        }
+
+        var error = result.Errors.First();
+        return error.Metadata.GetValueOrDefault("ErrorType") switch
+        {
+            "NotFound" => controller.NotFound(error.Message),
+            "Validation" => controller.BadRequest(error.Message),
+            "Authentication" => controller.Unauthorized(),
+            _ => controller.StatusCode(500)
+        };
+    }
 }

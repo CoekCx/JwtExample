@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using Business.Abstractions.Data;
+using Business.Common.Results;
 using Domain.Entities;
 using MediatR;
 
@@ -12,7 +13,7 @@ internal sealed class CreateProductCommandHandler : BaseCommandHandler<CreatePro
     public CreateProductCommandHandler(IApplicationDbContext dbContext) =>
         _dbContext = dbContext;
 
-    public async Task<Result<Guid>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
+    public override async Task<Result<Guid>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
         try
         {

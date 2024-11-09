@@ -1,6 +1,7 @@
 ﻿using FluentResults;
 using Business.Abstractions.Authentication;
 using Business.Abstractions.Data;
+using Business.Common.Results;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,7 @@ internal sealed class LoginUserCommandHandler : BaseCommandHandler<LoginUserComm
         _jwtProvider = jwtProvider;
     }
 
-    public async Task<Result<string>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
+    public override async Task<Result<string>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _dbContext.Users
             .AsNoTracking()

@@ -1,4 +1,5 @@
-﻿using Business.Users.GetById;
+﻿using Business.Shared;
+using Business.Users.GetById;
 using Business.Users.Login;
 using Business.Users.Register;
 using Infrastructure.Extensions;

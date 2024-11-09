@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using Business.Abstractions.Data;
+using Business.Common.Results;
 using Business.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ internal sealed class GetAllProductsQueryHandler : BaseQueryHandler<GetAllProduc
     public GetAllProductsQueryHandler(IApplicationDbContext dbContext) =>
         _dbContext = dbContext;
 
-    public async Task<Result<IEnumerable<ProductResponse>>> Handle(
+    public override async Task<Result<IEnumerable<ProductResponse>>> Handle(
         GetAllProductsQuery request, 
         CancellationToken cancellationToken)
     {

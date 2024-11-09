@@ -1,6 +1,7 @@
 ﻿using Business.Products.Update;
 using JwtExamples.MinimalApi.Abstractions;
 using JwtExamples.MinimalApi.Constants;
+using JwtExamples.MinimalApi.Extensions;
 using Mapster;
 using MediatR;
 
@@ -15,10 +16,8 @@ public sealed class UpdateEndpoint : IEndpoint
         app.MapPut("products/{id:guid}", async (ISender sender, Guid id, UpdateRequest request, CancellationToken cancellationToken) =>
         {
             var command = request.Adapt<UpdateProductCommand>() with { Id = id };
-
-            await sender.Send(command, cancellationToken);
-
-            return Results.NoContent();
+            var result = await sender.Send(command, cancellationToken);
+            return result.ToMinimalApiResult();
         }).WithTags(Tags.Products);
     }
 }

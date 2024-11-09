@@ -1,6 +1,7 @@
 ﻿using FluentResults;
 using Business.Abstractions.Data;
 using Business.Common.Errors;
+using Business.Common.Results;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +14,7 @@ internal sealed class UpdateProductCommandHandler : BaseCommandHandler<UpdatePro
     public UpdateProductCommandHandler(IApplicationDbContext dbContext) =>
         _dbContext = dbContext;
 
-    public async Task<Result> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         var product = await _dbContext.Products
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);

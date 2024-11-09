@@ -5,25 +5,37 @@ namespace JwtExamples.MinimalApi.Extensions;
 
 public static class ResultExtensions
 {
-    public static IResult ToHttpResult<T>(this Result<T> result) =>
-        result.Match<IResult>(
-            success => Results.Ok(success),
-            errors => errors.First().Metadata.GetValueOrDefault("ErrorType") switch
-            {
-                "NotFound" => Results.NotFound(errors),
-                "Validation" => Results.BadRequest(errors),
-                "Authentication" => Results.Unauthorized(),
-                _ => Results.StatusCode(500)
-            });
+    public static IResult ToMinimalApiResult<T>(this Result<T> result)
+    {
+        if (result.IsSuccess)
+        {
+            return Results.Ok(result.Value);
+        }
 
-    public static IResult ToHttpResult(this Result result) =>
-        result.Match<IResult>(
-            () => Results.Ok(),
-            errors => errors.First().Metadata.GetValueOrDefault("ErrorType") switch
-            {
-                "NotFound" => Results.NotFound(errors),
-                "Validation" => Results.BadRequest(errors),
-                "Authentication" => Results.Unauthorized(),
-                _ => Results.StatusCode(500)
-            });
+        var error = result.Errors.First();
+        return error.Metadata.GetValueOrDefault("ErrorType") switch
+        {
+            "NotFound" => Results.NotFound(error.Message),
+            "Validation" => Results.BadRequest(error.Message),
+            "Authentication" => Results.Unauthorized(),
+            _ => Results.StatusCode(500)
+        };
+    }
+
+    public static IResult ToMinimalApiResult(this Result result)
+    {
+        if (result.IsSuccess)
+        {
+            return Results.NoContent();
+        }
+
+        var error = result.Errors.First();
+        return error.Metadata.GetValueOrDefault("ErrorType") switch
+        {
+            "NotFound" => Results.NotFound(error.Message),
+            "Validation" => Results.BadRequest(error.Message),
+            "Authentication" => Results.Unauthorized(),
+            _ => Results.StatusCode(500)
+        };
+    }
 } 
