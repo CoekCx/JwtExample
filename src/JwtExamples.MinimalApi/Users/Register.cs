@@ -1,6 +1,7 @@
 ﻿using Business.Users.Register;
 using JwtExamples.MinimalApi.Abstractions;
 using JwtExamples.MinimalApi.Constants;
+using JwtExamples.MinimalApi.Extensions;
 using Mapster;
 using MediatR;
 
@@ -15,10 +16,9 @@ internal sealed class RegisterEndpoint : IEndpoint
         app.MapPost("users/register", async (ISender sender, RegisterRequest request, CancellationToken cancellationToken) =>
         {
             var command = request.Adapt<RegisterUserCommand>();
-
-            var response = await sender.Send(command, cancellationToken);
-
-            return Results.Ok(response);
-        }).WithTags(Tags.Users);
+            var result = await sender.Send(command, cancellationToken);
+            return result.ToMinimalApiResult();
+        }).WithTags(Tags.Users)
+          .AllowAnonymous();
     }
 }

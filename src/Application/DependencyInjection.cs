@@ -1,4 +1,5 @@
 ﻿using Business.Behaviors;
+using FluentResults;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 

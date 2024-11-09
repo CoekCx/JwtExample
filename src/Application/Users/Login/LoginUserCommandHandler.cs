@@ -1,11 +1,12 @@
-﻿using Business.Abstractions.Authentication;
+﻿using FluentResults;
+using Business.Abstractions.Authentication;
 using Business.Abstractions.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Business.Users.Login;
 
-internal sealed class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, string>
+internal sealed class LoginUserCommandHandler : BaseCommandHandler<LoginUserCommand, string>
 {
     private readonly IApplicationDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
@@ -21,7 +22,7 @@ internal sealed class LoginUserCommandHandler : IRequestHandler<LoginUserCommand
         _jwtProvider = jwtProvider;
     }
 
-    public async Task<string> Handle(LoginUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<string>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _dbContext.Users
             .AsNoTracking()
@@ -29,14 +30,15 @@ internal sealed class LoginUserCommandHandler : IRequestHandler<LoginUserCommand
 
         if (user is null)
         {
-            throw new Exception("User not found by email.");
+            return Result.Fail(new Error("User not found by email."));
         }
 
         if (!_passwordHasher.Verify(request.Password, user.Password))
         {
-            throw new Exception("Incorrect password");
+            return Result.Fail(new Error("Incorrect password"));
         }
 
-        return _jwtProvider.Generate(user.Id, user.Email);
+        var token = _jwtProvider.Generate(user.Id, user.Email);
+        return Result.Ok(token);
     }
 }

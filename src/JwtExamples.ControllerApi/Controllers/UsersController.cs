@@ -1,8 +1,9 @@
-﻿using Business.Shared;
-using Business.Users.GetById;
+﻿using Business.Users.GetById;
+using Business.Users.Login;
 using Business.Users.Register;
 using Infrastructure.Extensions;
 using JwtExamples.ControllerApi.Abstractions;
+using JwtExamples.ControllerApi.Extensions;
 using JwtExamples.ControllerApi.Requests.Users;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
@@ -23,14 +24,13 @@ public sealed class UsersController : BaseController
     [HttpPost("register")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Register(RegisterUserRequest request, CancellationToken cancellationToken)
     {
         var command = request.Adapt<RegisterUserCommand>();
-
-        var response = await Sender.Send(command, cancellationToken);
-
-        return Ok(response);
+        var result = await Sender.Send(command, cancellationToken);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -58,14 +58,12 @@ public sealed class UsersController : BaseController
     /// <returns>User details.</returns>
     [HttpGet("me")]
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetLoggedUser(CancellationToken cancellationToken)
     {
         var query = new GetUserByIdQuery(HttpContext.User.GetUserId());
-
-        var response = await Sender.Send(query, cancellationToken);
-
-        return Ok(response);
+        var result = await Sender.Send(query, cancellationToken);
+        return result.ToActionResult(this);
     }
     
     /// <summary>
@@ -76,14 +74,13 @@ public sealed class UsersController : BaseController
     /// <returns>The user identifier.</returns>
     [HttpPost("login")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login(LoginUserRequest request, CancellationToken cancellationToken)
     {
-        var command = request.Adapt<LoginUserRequest>();
-
-        var response = await Sender.Send(command, cancellationToken);
-
-        return Ok(response);
+        var command = request.Adapt<LoginUserCommand>();
+        var result = await Sender.Send(command, cancellationToken);
+        return result.ToActionResult(this);
     }
 }

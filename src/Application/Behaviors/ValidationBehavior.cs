@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using FluentResults;
+using FluentValidation;
 using MediatR;
 
 namespace Business.Behaviors;
@@ -10,6 +11,7 @@ namespace Business.Behaviors;
 /// <typeparam name="TResponse">The response type.</typeparam>
 public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : class
+    where TResponse : ResultBase
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
 
@@ -17,6 +19,11 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
     /// Initializes a new instance of the <see cref="ValidationBehavior{TRequest,TResponse}"/> class.
     /// </summary>
     /// <param name="validators">The validator for the current request type.</param>
+    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
+    {
+        _validators = validators;
+    }
+
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         if (!_validators.Any())
@@ -29,11 +36,15 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
         var errors = _validators
             .Select(x => x.Validate(context))
             .SelectMany(x => x.Errors)
-            .Where(x => x != null);
+            .Where(x => x != null)
+            .Select(x => new Error(x.ErrorMessage))
+            .ToList();
 
         if (errors.Any())
         {
-            throw new ValidationException(errors);
+            // Create a new Result with errors
+            var result = Result.Fail(errors);
+            return (TResponse)(ResultBase)result;
         }
 
         return await next();

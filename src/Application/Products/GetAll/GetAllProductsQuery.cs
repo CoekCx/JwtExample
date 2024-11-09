@@ -1,6 +1,7 @@
-﻿using Business.Shared;
+﻿using FluentResults;
+using Business.Shared;
 using MediatR;
 
 namespace Business.Products.GetAll;
 
-public sealed record GetAllProductsQuery : IRequest<IEnumerable<ProductResponse>>;
+public sealed record GetAllProductsQuery() : IRequest<Result<IEnumerable<ProductResponse>>>;

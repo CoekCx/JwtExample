@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using FluentResults;
+using MediatR;
 
 namespace Business.Users.Register;
 
@@ -6,4 +7,4 @@ public sealed record RegisterUserCommand(
     string Email,
     string Password,
     string FirstName,
-    string LastName) : IRequest<Guid>;
+    string LastName) : IRequest<Result<Guid>>;

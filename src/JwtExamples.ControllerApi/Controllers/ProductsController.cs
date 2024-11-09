@@ -5,6 +5,7 @@ using Business.Products.GetById;
 using Business.Products.Update;
 using Business.Shared;
 using JwtExamples.ControllerApi.Abstractions;
+using JwtExamples.ControllerApi.Extensions;
 using JwtExamples.ControllerApi.Requests.Products;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
@@ -24,14 +25,13 @@ public sealed class ProductsController : BaseController
     /// <returns>The product identifier.</returns>
     [HttpPost]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create(CreateProductRequest request, CancellationToken cancellationToken)
     {
         var command = request.Adapt<CreateProductCommand>();
-
-        var response = await Sender.Send(command, cancellationToken);
-
-        return Ok(response);
+        var result = await Sender.Send(command, cancellationToken);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -42,14 +42,13 @@ public sealed class ProductsController : BaseController
     /// <returns>The product identifier.</returns>
     [HttpPut("{productId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Update(Guid productId, UpdateProductRequest request, CancellationToken cancellationToken)
     {
         var command = request.Adapt<UpdateProductCommand>() with { Id = productId };
-
-        await Sender.Send(command, cancellationToken);
-
-        return NoContent();
+        var result = await Sender.Send(command, cancellationToken);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -60,18 +59,13 @@ public sealed class ProductsController : BaseController
     /// <returns>The product with the specified identifier.</returns>
     [HttpGet("{productId:guid}")]
     [ProducesResponseType(typeof(ProductResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid productId, CancellationToken cancellationToken)
     {
-        var query = new GetProductByIdQuery(productId);
-
-        var response = await Sender.Send(query, cancellationToken);
-
-        return Ok(response);
+        var query = new GetByIdProductQuery(productId);
+        var result = await Sender.Send(query, cancellationToken);
+        return result.ToActionResult(this);
     }
-
-
 
     /// <summary>
     /// Gets all products.
@@ -79,17 +73,13 @@ public sealed class ProductsController : BaseController
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>All Products.</returns>
     [HttpGet]
-    [Authorize]
     [ProducesResponseType(typeof(IEnumerable<ProductResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var query = new GetAllProductsQuery();
-
-        var response = await Sender.Send(query, cancellationToken);
-
-        return Ok(response);
+        var result = await Sender.Send(query, cancellationToken);
+        return result.ToActionResult(this);
     }
 
     /// <summary>
@@ -100,14 +90,11 @@ public sealed class ProductsController : BaseController
     /// <returns>No Content</returns>
     [HttpDelete("{productId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteOrder(Guid productId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid productId, CancellationToken cancellationToken)
     {
         var command = new DeleteProductCommand(productId);
-
-        await Sender.Send(command, cancellationToken);
-
-        return NoContent();
+        var result = await Sender.Send(command, cancellationToken);
+        return result.ToActionResult(this);
     }
 }
